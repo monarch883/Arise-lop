@@ -1,0 +1,116 @@
+--[[ 
+  سكربت Pegasus الخاص - نسخة مخصصة
+  Auto Farm متطور لـ Arise Crossover
+]]
+
+local WinterRaidMapName = "Winter Raid"
+local AutoFarmEnabled = false
+local BoostDamage = false
+local lastPauseTime = tick()
+
+local function getFarmDelay()
+    local mapName = game:GetService("Workspace"):FindFirstChild("PlaceName")
+    if mapName and mapName:IsA("StringValue") then
+        if mapName.Value == WinterRaidMapName then
+            return math.random(18, 19) / 10 -- تأخير بسيط للرايد
+        else
+            return 0 -- بدون تأخير بالدنجنز
+        end
+    end
+    return 1.5
+end
+
+local function isInWinterRaid()
+    local placeName = game:GetService("Workspace"):FindFirstChild("PlaceName")
+    if placeName and placeName:IsA("StringValue") then
+        return placeName.Value == WinterRaidMapName
+    end
+    return false
+end
+
+local function findNearestNPC()
+    local nearestNPC = nil
+    local shortestDistance = math.huge
+    for _, npc in pairs(game:GetService("Workspace").NPCs:GetChildren()) do
+        if npc:FindFirstChild("Humanoid") and npc.Humanoid.Health > 0 then
+            local distance = (npc.PrimaryPart.Position - game.Players.LocalPlayer.Character.PrimaryPart.Position).Magnitude
+            if distance < shortestDistance then
+                nearestNPC = npc
+                shortestDistance = distance
+            end
+        end
+    end
+    return nearestNPC
+end
+
+local function attackTarget(target)
+    if target and target:FindFirstChild("Humanoid") then
+        repeat
+            pcall(function()
+                if BoostDamage then
+                    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = target.PrimaryPart.CFrame * CFrame.new(0, 0, 2)
+                else
+                    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = target.PrimaryPart.CFrame * CFrame.new(0, 0, 3)
+                end
+                game:GetService("ReplicatedStorage").Remotes.Damage:FireServer(target)
+            end)
+            task.wait(BoostDamage and 0.2 or 0.5)
+        until target.Humanoid.Health <= 0 or not AutoFarmEnabled
+    end
+end
+
+local function autoFarm()
+    while AutoFarmEnabled do
+        local delay = getFarmDelay()
+        local npc = findNearestNPC()
+        if npc then
+            attackTarget(npc)
+        end
+
+        if tick() - lastPauseTime >= 1800 then
+            AutoFarmEnabled = false
+            game.StarterGui:SetCore("ChatMakeSystemMessage", {
+                Text = "⏸️ توقف مؤقت للسلامة...";
+                Color = Color3.fromRGB(255, 255, 0);
+            })
+            task.wait(60)
+            AutoFarmEnabled = true
+            lastPauseTime = tick()
+        end
+
+        task.wait(delay)
+    end
+end
+
+game.Players.LocalPlayer.Chatted:Connect(function(msg)
+    msg = msg:lower()
+    if msg == "!farm on" then
+        AutoFarmEnabled = true
+        lastPauseTime = tick()
+        task.spawn(autoFarm)
+        game.StarterGui:SetCore("ChatMakeSystemMessage", {
+            Text = "✅ بدأ الفارم Pegasus Style!";
+            Color = Color3.fromRGB(0, 255, 0);
+        })
+    elseif msg == "!farm off" then
+        AutoFarmEnabled = false
+        game.StarterGui:SetCore("ChatMakeSystemMessage", {
+            Text = "🛑 تم إيقاف الفارم.";
+            Color = Color3.fromRGB(255, 165, 0);
+        })
+    elseif msg == "!boost on" then
+        BoostDamage = true
+        game.StarterGui:SetCore("ChatMakeSystemMessage", {
+            Text = "⚡ تم تفعيل تسريع الضرب للبوسات!";
+            Color = Color3.fromRGB(0, 255, 255);
+        })
+    elseif msg == "!boost off" then
+        BoostDamage = false
+        game.StarterGui:SetCore("ChatMakeSystemMessage", {
+            Text = "⚡ تم تعطيل التسريع.";
+            Color = Color3.fromRGB(255, 100, 0);
+        })
+    end
+end)
+
+print("🔵
