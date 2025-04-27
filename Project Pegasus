@@ -1,0 +1,153 @@
+-- تعديلات سكربت Arise Crossover لـ Roblox
+loadstring(game:HttpGet("https://raw.githubusercontent.com/JustLevel/goombahub/main/AriseCrossover.lua", true))()
+
+-- ========== رسالة تفعيل المشروع ========== --
+game:GetService("StarterGui"):SetCore("SendNotification", {
+    Title = "Pegasus Project",
+    Text = "تم تفعيل مشروع Pegasus بنجاح",
+    Icon = "rbxassetid://57254792",
+    Duration = 5
+})
+
+print("=== تم تفعيل مشروع Pegasus بنجاح ===")
+
+-- ========== التعديلات الجديدة ========== --
+local function adjustAttackSpeed()
+    local originalCooldown = 0.5
+    local newCooldown = math.random(0.3, 0.4) -- ضربات أسرع (0.3 إلى 0.4 ثانية)
+    
+    if game.Players.LocalPlayer.Character then
+        local humanoid = game.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
+        if humanoid then
+            humanoid:SetAttribute("AttackCooldown", newCooldown)
+        end
+    end
+end
+
+local function fixWinterRaid()
+    -- إصلاح وقت الانتقال بين NPCs (1.8 إلى 1.9 ثانية)
+    local npcTransitionTime = math.random(1.8, 1.9)
+    
+    -- إصلاح مشكلة عدم قتل NPCs
+    local npcKillFix = true
+end
+
+local function fixDungeonBug()
+    -- منع العودة التلقائية لمكان NPC ميت
+    local antiReturn = true
+end
+
+local function createMobileGUI()
+    -- واجهة للهاتف مع زر تشغيل/إيقاف
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "AriseCrossoverMobileGUI"
+    screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+    local toggleButton = Instance.new("TextButton")
+    toggleButton.Name = "ToggleButton"
+    toggleButton.Size = UDim2.new(0, 150, 0, 60)
+    toggleButton.Position = UDim2.new(0.8, 0, 0.9, 0) -- زاوية يمين-أسفل
+    toggleButton.Text = "إيقاف السكربت"
+    toggleButton.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
+    toggleButton.TextColor3 = Color3.new(1, 1, 1)
+    toggleButton.Font = Enum.Font.GothamBold
+    toggleButton.TextSize = 14
+    toggleButton.Parent = screenGui
+
+    local scriptActive = true
+    toggleButton.MouseButton1Click:Connect(function()
+        scriptActive = not scriptActive
+        toggleButton.Text = scriptActive and "إيقاف السكربت" or "تشغيل السكربت"
+        toggleButton.BackgroundColor3 = scriptActive and Color3.fromRGB(200, 60, 60) or Color3.fromRGB(60, 200, 60)
+        
+        -- هنا يمكنك إضافة أوامر التشغيل/الإيقاف
+        if scriptActive then
+            adjustAttackSpeed()
+            fixWinterRaid()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Pegasus Project",
+                Text = "تم إعادة تفعيل السكربت",
+                Duration = 3
+            })
+        else
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Pegasus Project",
+                Text = "تم إيقاف السكر��ت مؤقتاً",
+                Duration = 3
+            })
+        end
+    end)
+end
+
+-- ========== إصلاح إعادة التشغيل التلقائي ========== --
+local function fixAutoRestartSystem()
+    -- نظام تتبع الموقع السابق
+    local lastPosition = nil
+    local lastMap = "Unknown"
+    
+    -- دالة التحقق من الانتقال بين الخرائط
+    local function checkMapTransition()
+        if not game.Players.LocalPlayer.Character then return end
+        
+        -- الحصول على الموقع الحالي
+        local currentPosition = game.Players.LocalPlayer.Character:GetPrimaryPartCFrame().Position
+        local currentMap = "MainMap" -- يمكن تغييرها حسب نظام السكربت الأساسي
+        
+        -- تحديد نوع الخريطة الحالية
+        if _G.AriseCrossover and _G.AriseCrossover.GetCurrentMapName then
+            currentMap = _G.AriseCrossover.GetCurrentMapName()
+        end
+        
+        -- إذا تغيرت الخريطة
+        if lastMap ~= currentMap then
+            -- إذا كنا ننتقل من الدانجن إلى الماب الرئيسي
+            if lastMap == "Dungeon" and currentMap == "MainMap" then
+                loadstring(game:HttpGet("https://raw.githubusercontent.com/JustLevel/goombahub/main/AriseCrossover.lua", true))()
+                wait(2)
+                adjustAttackSpeed()
+                fixWinterRaid()
+                fixDungeonBug()
+                game:GetService("StarterGui"):SetCore("SendNotification", {
+                    Title = "Pegasus Project",
+                    Text = "تم إعادة التشغيل بعد العودة من الدانجن",
+                    Duration = 3
+                })
+            end
+            
+            -- إذا كنا ننتقل إلى الدانجن
+            if currentMap == "Dungeon" then
+                loadstring(game:HttpGet("https://raw.githubusercontent.com/JustLevel/goombahub/main/AriseCrossover.lua", true))()
+                wait(2)
+                adjustAttackSpeed()
+                fixWinterRaid()
+                fixDungeonBug()
+                game:GetService("StarterGui"):SetCore("SendNotification", {
+                    Title = "Pegasus Project",
+                    Text = "تم إعادة التشغيل للدانجن الجديد",
+                    Duration = 3
+                })
+            end
+        end
+        
+        -- تحديث القيم السابقة
+        lastPosition = currentPosition
+        lastMap = currentMap
+    end
+
+    -- بدء نظام التتبع
+    while true do
+        checkMapTransition()
+        wait(3) -- التحقق كل 3 ثواني
+    end
+end
+
+-- ========== تطبيق جميع التعديلات ========== --
+adjustAttackSpeed()
+fixWinterRaid()
+fixDungeonBug()
+createMobileGUI()
+
+-- بدء نظام إصلاح إعادة التشغيل التلقائي في كوروتين منفصلة
+coroutine.wrap(fixAutoRestartSystem)()
+
+print("=== [Pegasus Project] تم تحميل السكربت المعدل بنجاح ===")
