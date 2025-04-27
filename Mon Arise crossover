@@ -1,5 +1,5 @@
 -- تعديلات سكربت Arise Crossover لـ Roblox
-loadstring(game:HttpGet("https://raw.githubusercontent.com/JustLevel/Aise-lop/main/AriseCrossover.lua", true))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/JustLevel/goombahub/main/AriseCrossover.lua", true))()
 
 -- ========== التعديلات الجديدة ========== --
 local function adjustAttackSpeed()
