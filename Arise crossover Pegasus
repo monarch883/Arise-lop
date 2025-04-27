@@ -1,31 +1,44 @@
---[[ 
-  سكربت Pegasus الخاص - نسخة مخصصة
-  Auto Farm متطور لـ Arise Crossover
+--[[
+  سكربت Pegasus المطور لـ Arise Crossover
+  الإصدار: 2.5 (مدمج)
+  الميزات:
+  - واجهة رسومية للهاتف
+  - فارم تلقائي ذكي
+  - تأخير قابل للتعديل حسب الخريطة
+  - سرعة ضرب متغيرة
+  - تحسينات خاصة بـ Winter Raid وقلعة الجحيم
 ]]
 
+loadstring(game:HttpGet("https://raw.githubusercontent.com/JustLevel/goombahub/main/AriseCrossover.lua", true))()
+
+-- ========== الإعدادات الأساسية ========== --
 local WinterRaidMapName = "Winter Raid"
+local HellCastleMapName = "Hell Castle"
 local AutoFarmEnabled = false
 local BoostDamage = false
 local lastPauseTime = tick()
 
+-- ========== تحسينات السكربت الثاني ========== --
 local function getFarmDelay()
     local mapName = game:GetService("Workspace"):FindFirstChild("PlaceName")
     if mapName and mapName:IsA("StringValue") then
         if mapName.Value == WinterRaidMapName then
             return math.random(18, 19) / 10 -- تأخير بسيط للرايد
+        elseif mapName.Value == HellCastleMapName then
+            return 0.3 -- سرعة فارم عالية في قلعة الجحيم
         else
-            return 0 -- بدون تأخير بالدنجنز
+            return 0 -- بدون تأخير في الدنجنز العادية
         end
     end
     return 1.5
 end
 
-local function isInWinterRaid()
-    local placeName = game:GetService("Workspace"):FindFirstChild("PlaceName")
-    if placeName and placeName:IsA("StringValue") then
-        return placeName.Value == WinterRaidMapName
+local function adjustAttackSpeed()
+    if BoostDamage then
+        return math.random(0.2, 0.3) -- سرعة ضرب عالية للبوسات
+    else
+        return math.random(0.4, 0.5) -- سرعة ضرب عادية
     end
-    return false
 end
 
 local function findNearestNPC()
@@ -54,11 +67,53 @@ local function attackTarget(target)
                 end
                 game:GetService("ReplicatedStorage").Remotes.Damage:FireServer(target)
             end)
-            task.wait(BoostDamage and 0.2 or 0.5)
+            task.wait(adjustAttackSpeed())
         until target.Humanoid.Health <= 0 or not AutoFarmEnabled
     end
 end
 
+-- ========== الواجهة الرسومية ========== --
+local function createMobileGUI()
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "AriseCrossoverMobileGUI"
+    screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+    local toggleButton = Instance.new("TextButton")
+    toggleButton.Name = "ToggleButton"
+    toggleButton.Size = UDim2.new(0, 150, 0, 60)
+    toggleButton.Position = UDim2.new(0.8, 0, 0.9, 0)
+    toggleButton.Text = "إيقاف السكربت"
+    toggleButton.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
+    toggleButton.TextColor3 = Color3.new(1, 1, 1)
+    toggleButton.Font = Enum.Font.GothamBold
+    toggleButton.TextSize = 14
+    toggleButton.Parent = screenGui
+
+    -- علامة مائية
+    local watermark = Instance.new("TextLabel")
+    watermark.Name = "Watermark"
+    watermark.Text = "Pegasus Script v2.5"
+    watermark.Size = UDim2.new(0, 200, 0, 30)
+    watermark.Position = UDim2.new(0.01, 0, 0.95, 0)
+    watermark.TextColor3 = Color3.fromRGB(255, 255, 255)
+    watermark.BackgroundTransparency = 1
+    watermark.Font = Enum.Font.GothamBold
+    watermark.TextSize = 14
+    watermark.Parent = screenGui
+
+    toggleButton.MouseButton1Click:Connect(function()
+        AutoFarmEnabled = not AutoFarmEnabled
+        toggleButton.Text = AutoFarmEnabled and "إيقاف السكربت" or "تشغيل السكربت"
+        toggleButton.BackgroundColor3 = AutoFarmEnabled and Color3.fromRGB(200, 60, 60) or Color3.fromRGB(60, 200, 60)
+        
+        if AutoFarmEnabled then
+            lastPauseTime = tick()
+            task.spawn(autoFarm)
+        end
+    end)
+end
+
+-- ========== الدالة الرئيسية للفارم ========== --
 local function autoFarm()
     while AutoFarmEnabled do
         local delay = getFarmDelay()
@@ -67,6 +122,7 @@ local function autoFarm()
             attackTarget(npc)
         end
 
+        -- إيقاف مؤقت للسلامة كل 30 دقيقة
         if tick() - lastPauseTime >= 1800 then
             AutoFarmEnabled = false
             game.StarterGui:SetCore("ChatMakeSystemMessage", {
@@ -82,35 +138,11 @@ local function autoFarm()
     end
 end
 
-game.Players.LocalPlayer.Chatted:Connect(function(msg)
-    msg = msg:lower()
-    if msg == "!farm on" then
-        AutoFarmEnabled = true
-        lastPauseTime = tick()
-        task.spawn(autoFarm)
-        game.StarterGui:SetCore("ChatMakeSystemMessage", {
-            Text = "✅ بدأ الفارم Pegasus Style!";
-            Color = Color3.fromRGB(0, 255, 0);
-        })
-    elseif msg == "!farm off" then
-        AutoFarmEnabled = false
-        game.StarterGui:SetCore("ChatMakeSystemMessage", {
-            Text = "🛑 تم إيقاف الفارم.";
-            Color = Color3.fromRGB(255, 165, 0);
-        })
-    elseif msg == "!boost on" then
-        BoostDamage = true
-        game.StarterGui:SetCore("ChatMakeSystemMessage", {
-            Text = "⚡ تم تفعيل تسريع الضرب للبوسات!";
-            Color = Color3.fromRGB(0, 255, 255);
-        })
-    elseif msg == "!boost off" then
-        BoostDamage = false
-        game.StarterGui:SetCore("ChatMakeSystemMessage", {
-            Text = "⚡ تم تعطيل التسريع.";
-            Color = Color3.fromRGB(255, 100, 0);
-        })
-    end
-end)
+-- ========== التشغيل الأولي ========== --
+createMobileGUI()
+game.StarterGui:SetCore("ChatMakeSystemMessage", {
+    Text = "✅ تم تفعيل سكربت Pegasus بنجاح!";
+    Color = Color3.fromRGB(0, 255, 0);
+})
 
-print("🔵
+print("🔵 سكربت Pegasus جاهز للعمل!")
